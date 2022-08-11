@@ -9,6 +9,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": "14.x"
+  },
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
