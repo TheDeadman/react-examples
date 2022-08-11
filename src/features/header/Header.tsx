@@ -19,7 +19,7 @@ export default function ButtonAppBar() {
         <DrawerMenu />
         <AppBar position="static">
           <Toolbar>
-            <IconButton
+            {/* <IconButton
               edge="start"
               color="inherit"
               aria-label="menu"
@@ -27,18 +27,18 @@ export default function ButtonAppBar() {
               onClick={() => dispatch(openDrawerMenu())}
             >
               <MenuIcon />
-            </IconButton>
+            </IconButton> */}
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Grapher
+              Simple React Examples
             </Typography>
-            <Button
+            {/* <Button
               color="inherit"
               onClick={() =>
                 navigator.clipboard.writeText(JSON.stringify(window.entryArray))
               }
             >
               Copy Performance Data
-            </Button>
+            </Button> */}
           </Toolbar>
         </AppBar>
       </Box>
