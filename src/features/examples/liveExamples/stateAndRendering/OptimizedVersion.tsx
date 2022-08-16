@@ -10,15 +10,20 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
+
 
 let renderCount = 0;
 const ChildComponent = ({ waitTime }: { waitTime: number; }) => {
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Child One has rendered {renderCount++} times
             <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
         </div>
     );
 };
@@ -70,15 +75,19 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
 
 let renderCount = 0;
 const ChildComponent = ({ waitTime }: { waitTime: number; }) => {
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Child One has rendered {renderCount++} times
             <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
         </div>
     );
 };

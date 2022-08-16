@@ -10,7 +10,9 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
+
 
 const NameComponent = ({ name }: { name: string }) => {
     return (
@@ -21,11 +23,14 @@ const NameComponent = ({ name }: { name: string }) => {
 const ChildComponent = (
     { waitTime, clickCountA, name }: { waitTime: number; clickCountA: number; name: string }
 ) => {
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Click Count A: {clickCountA}
             <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
             <NameComponent name={name} />
             <br />
         </div>
@@ -126,7 +131,9 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
+
 
 const NameComponent = ({ name }: { name: string }) => {
     return (
@@ -137,10 +144,14 @@ const NameComponent = ({ name }: { name: string }) => {
 const ChildComponent = (
     { waitTime, clickCountA, name }: { waitTime: number; clickCountA: number; name: string }
 ) => {
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Click Count A: {clickCountA}
+            <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
             <br />
             <NameComponent name={name} />
             <br />

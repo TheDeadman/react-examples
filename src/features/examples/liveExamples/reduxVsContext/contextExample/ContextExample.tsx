@@ -25,7 +25,9 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
+
 
 const NameComponent = () => {
     const name = useContextName();
@@ -38,10 +40,14 @@ let childComponentRenderCount = 0;
 const ChildComponent = () => {
     const clickCountA = useClickCountA();
     const waitTime = useWaitTime();
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Child One - Click Count A {clickCountA}
+            <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
             <br />
             Child One - Render Count {childComponentRenderCount++}
             <br />
@@ -279,6 +285,7 @@ function wait(ms: number) {
     while (now - start < ms) {
         now = Date.now();
     }
+    return now;
 }
 
 const NameComponent = () => {
@@ -292,10 +299,14 @@ let childComponentRenderCount = 0;
 const ChildComponent = () => {
     const clickCountA = useClickCountA();
     const waitTime = useWaitTime();
-    wait(waitTime);
+    const time = wait(waitTime);
     return (
         <div style={{ background: "green" }}>
             Child One - Click Count A {clickCountA}
+            <br />
+            Wait time is: {waitTime}
+            <br />
+            Rendered at: {time}
             <br />
             Child One - Render Count {childComponentRenderCount++}
             <br />
