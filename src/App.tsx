@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import Stack from "@mui/material/Stack";
 import Header from "features/header/Header";
 import { useAppDispatch } from "redux/hooks";
-import { ExampleList } from "examples/ExampleList";
+import { ExampleList } from "features/examples/ExampleList";
 
 import "./App.css";
 

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { lazy, ReactNode, Suspense } from 'react';
 import {
   Box,
   FormControl,
@@ -12,11 +12,16 @@ import {
   Select,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { BasicExample } from './basic/BasicExample';
-import { PropsVsStateExample } from './propsVsState/PropsVsState';
-import { StateAndRenderingExample } from './stateAndRendering/StateAndRenderingExample';
-import { CommonStateAndRenderingExample } from './commonStateAndRendering/CommonStateAndRenderingExample';
-import { BeforeStarting } from './beforeStarting/BeforeStarting';
+import PropsVsStateExample from './liveExamples/propsVsState/PropsVsState';
+import { StateAndRenderingExample } from './liveExamples/stateAndRendering/StateAndRenderingExample';
+import { CommonStateAndRenderingExample } from './liveExamples/commonStateAndRendering/CommonStateAndRenderingExample';
+import { BeforeStarting } from './BeforeStarting';
+import './example.css';
+import { ContextVsReduxExample } from './liveExamples/reduxVsContext/ReduxVsContextExample';
+import { ArraysAndObjectsExamples } from './liveExamples/arraysAndObjects/ArraysAndObjectsExamples';
+
+
+const BasicExample = lazy(() => import('./liveExamples/basic/BasicExample'))
 
 const TooLazyToRefactor = ({ children }: { children: ReactNode }) => {
   return (
@@ -50,15 +55,19 @@ export const ExampleList = () => {
             <MenuItem value={'propsVsState'}>Props vs State</MenuItem>
             <MenuItem value={'stateAndRendering'}>State and Rendering</MenuItem>
             <MenuItem value={'commonStateAndRendering'}>Common State and Rendering</MenuItem>
+            <MenuItem value={'contextVsRedux'}>Context vs Redux</MenuItem>
+            {/* <MenuItem value={'arraysAndObjects'}>Arrays and Objects</MenuItem> */}
           </Select>
         </FormControl>
       </Box>
       <br />
       {!match.exampleName && <BeforeStarting />}
-      {match.exampleName === "basic" && <TooLazyToRefactor><BasicExample /></TooLazyToRefactor>}
+      {match.exampleName === "basic" && <TooLazyToRefactor><Suspense fallback={<>FALLBACK</>}><BasicExample /></Suspense></TooLazyToRefactor>}
       {match.exampleName === "propsVsState" && <TooLazyToRefactor><PropsVsStateExample /></TooLazyToRefactor>}
       {match.exampleName === "stateAndRendering" && <TooLazyToRefactor><StateAndRenderingExample /></TooLazyToRefactor>}
       {match.exampleName === "commonStateAndRendering" && <TooLazyToRefactor><CommonStateAndRenderingExample /></TooLazyToRefactor>}
+      {match.exampleName === "contextVsRedux" && <TooLazyToRefactor><ContextVsReduxExample /></TooLazyToRefactor>}
+      {/* {match.exampleName === "arraysAndObjects" && <TooLazyToRefactor><ArraysAndObjectsExamples /></TooLazyToRefactor>} */}
     </>
   );
 };

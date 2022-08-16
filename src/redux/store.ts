@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
-import reduxExampleReducer from "examples/commonStateAndRendering/reduxExample/reduxExampleSlice";
+import reduxExampleReducer from "features/examples/liveExamples/commonStateAndRendering/reduxExample/reduxExampleSlice";
 import drawerMenuReducer from "features/drawerMenu/drawerMenuSlice";
+import unoptimizedDotaHeroReducer from 'features/examples/liveExamples/arraysAndObjects/unoptimized/unoptimizedSlice';
 
 export const store = configureStore({
   reducer: {
     drawerMenu: drawerMenuReducer,
-    reduxExample: reduxExampleReducer
+    reduxExample: reduxExampleReducer,
+    unoptimizedDotaHeroes: unoptimizedDotaHeroReducer
   },
 });
 
