@@ -2,6 +2,7 @@ import React, { useState } from "react";
 // import ProblematicExample from "./ProblematicExample";
 import ContextExample from "./contextExample/ContextExample";
 import ReduxExample from "./reduxExample/ReduxExample";
+import ReduxLessEfficientExample from "./reduxExampleLessEfficient/ReduxExample";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 
@@ -23,11 +24,13 @@ export const ContextVsReduxExample = () => {
         onChange={handleChange}
       >
         <ToggleButton value="context">Context</ToggleButton>
+        <ToggleButton value="reduxLessEfficient">Bad Redux Example</ToggleButton>
         <ToggleButton value="redux">Redux</ToggleButton>
       </ToggleButtonGroup>
 
       <br />
       {exampleVersion === 'context' && <ContextExample />}
+      {exampleVersion === 'reduxLessEfficient' && <ReduxLessEfficientExample />}
       {exampleVersion === 'redux' && <ReduxExample />}
     </>
   )
