@@ -14,7 +14,7 @@ export type HeroData = {
 }
 
 type HeroListState = {
-    stage: 'loading' | 'refreshing' | 'done';
+    stage: 'loading' | 'refreshing' | 'done' | 'error';
     heroes: HeroData[]
 }
 

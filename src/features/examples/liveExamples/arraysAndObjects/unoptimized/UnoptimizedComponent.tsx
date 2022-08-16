@@ -1,13 +1,15 @@
 import axios, { AxiosResponse } from "axios";
 import React, { ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import RotateRightIcon from '@mui/icons-material/RotateRight';
 import { useAppDispatch, useAppSelector } from "redux/hooks";
-import { HeroData, selectAllHeroes, setAllHeroes } from "./unoptimizedSlice";
+import { HeroData, selectAllHeroes, selectStage, setAllHeroes } from "./unoptimizedSlice";
 
 
 const AdvancedComponent = () => {
     const dispatch = useAppDispatch();
     const heroes = useAppSelector(selectAllHeroes);
+    const stage = useAppSelector(selectStage);
     useEffect(() => {
         const getAllHeroes = async () => {
             try {
@@ -22,11 +24,13 @@ const AdvancedComponent = () => {
     return (
         <>
             Arrays and Objects: Unoptimized
-            <div className="hero-filters">
+            {stage === 'error' && <div className="error-page">ERROR</div>}
+            {stage !== 'loading' && <div className="hero-filters">
 
-            </div>
+            </div>}
             <div className="hero-list">
-                {heroes.map((hero) => <div className="hero-link">
+                {stage === "loading" && <div className="loading-icon"><RotateRightIcon /></div>}
+                {stage !== "loading" && heroes.map((hero) => <div className="hero-link">
                     <Link to={`${hero.name.replace('npc_dota_hero_', '')}`}>
                         <img src={`https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${hero.name.replace('npc_dota_hero_', '')}.png`} />
                     </Link>

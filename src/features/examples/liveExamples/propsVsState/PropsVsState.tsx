@@ -16,7 +16,9 @@ const ChildComponent = ({ text }: { text: string }) => {
   );
 };
 
-const ChildComponent2 = ({ isShowingNestedComponent }: { isShowingNestedComponent: boolean }) => {
+const ChildComponent2 = (
+  { isShowingNestedComponent }: { isShowingNestedComponent: boolean }
+  ) => {
   return (
     <div style={{ background: "blue", padding: 5 }}>
       This is the second child component.
@@ -41,7 +43,9 @@ const PropsVsStateComponent = () => {
       <div>
         <button onClick={() => setClickCount(clickCount + 1)}>CLICK ME!</button>
         &nbsp;&nbsp;&nbsp;
-        <button onClick={() => isShowingNestedComponent = !isShowingNestedComponent}>Toggle Nested Component</button>
+        <button onClick={() => isShowingNestedComponent = !isShowingNestedComponent}>
+          Toggle Nested Component
+        </button>
       </div>
       <br />
       <ChildComponent text={\`Button Click Count: \${clickCount}\`} />

@@ -30,3 +30,14 @@
 .hero-link > a > img {
     width: 100px;
 }
+
+.hero-list > .loading-icon {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.hero-list > .loading-icon > svg {
+    width: 100px;
+    height: 100px;
+}
