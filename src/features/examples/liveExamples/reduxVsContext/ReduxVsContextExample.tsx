@@ -24,7 +24,7 @@ export const ContextVsReduxExample = () => {
         onChange={handleChange}
       >
         <ToggleButton value="context">Context</ToggleButton>
-        <ToggleButton value="reduxLessEfficient">Bad Redux Example</ToggleButton>
+        <ToggleButton value="reduxLessEfficient">Less Efficient Redux</ToggleButton>
         <ToggleButton value="redux">Redux</ToggleButton>
       </ToggleButtonGroup>
 
