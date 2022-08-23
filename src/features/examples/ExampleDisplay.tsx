@@ -4,9 +4,6 @@ export const ExampleDisplay = ({ descriptionBlock, componentBlock }: { descripti
     return (
         <div className="example-container">
             <div>
-                {descriptionBlock}
-            </div>
-            <div>
                 {componentBlock}
             </div>
         </div>

@@ -6,13 +6,15 @@ type ExampleState = {
     clickCountA: number;
     clickCountB: number;
     waitTime: number;
+    testArray: { title: string }[]
 }
 
 const initialState: ExampleState = {
     name: '',
     clickCountA: 0,
     clickCountB: 0,
-    waitTime: 0
+    waitTime: 0,
+    testArray: [{ title: "one" }, { title: "two" }, { title: "three" }, { title: "four" }, { title: "five" }]
 };
 
 export const reduxExampleSlice = createSlice({

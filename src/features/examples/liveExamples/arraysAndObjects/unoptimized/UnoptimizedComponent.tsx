@@ -5,7 +5,6 @@ import RotateRightIcon from '@mui/icons-material/RotateRight';
 import { useAppDispatch, useAppSelector } from "redux/hooks";
 import { HeroData, selectAllHeroes, selectStage, setAllHeroes } from "./unoptimizedSlice";
 
-
 const AdvancedComponent = () => {
     const dispatch = useAppDispatch();
     const heroes = useAppSelector(selectAllHeroes);

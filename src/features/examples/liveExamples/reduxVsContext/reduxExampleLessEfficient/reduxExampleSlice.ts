@@ -12,8 +12,23 @@ const initialState: ExampleState = {
     name: '',
     clickCountA: 0,
     clickCountB: 0,
-    waitTime: 0
+    waitTime: 0,
 };
+
+
+export const otherExampleSlice = createSlice({
+    name: "otherExample",
+    initialState,
+    reducers: {
+        incrementOtherClickCountA: (state) => {
+            state.clickCountA += 1;
+        },
+    },
+});
+
+export const { incrementOtherClickCountA } = otherExampleSlice.actions;
+export const selectOtherClickCountA = (state: RootState) => state.otherSlice.clickCountA;
+export const otherReducer = otherExampleSlice.reducer;
 
 export const reduxExampleSlice = createSlice({
     name: "reduxExample",
@@ -37,8 +52,18 @@ export const reduxExampleSlice = createSlice({
 export const { setName, incrementClickCountA, incrementClickCountB, setWaitTime } = reduxExampleSlice.actions;
 
 export const selectReduxExample = (state: RootState) => state.reduxExample;
-export const selectClickCounts = (state: RootState) => {
-    return { clickCountA: state.reduxExample.clickCountA, clickCountB: state.reduxExample.clickCountB }
+export const selectClickCounts = createSelector([(state: RootState) => state.reduxExample.clickCountA, (state: RootState) => state.reduxExample.clickCountB], (clickCountA, clickCountB) => {
+    return { clickCountA: clickCountA, clickCountB: clickCountB }
+});
+
+export const selectObj1 = (state: RootState) => {
+    return {
+        testObj: state.reduxExample.testObj
+    }
+}
+
+export const selectObj2 = (state: RootState) => {
+    return state.reduxExample.testObj
 }
 
 export default reduxExampleSlice.reducer;

@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "redux/store";
 
 type ExampleState = {
@@ -14,6 +14,21 @@ const initialState: ExampleState = {
     clickCountB: 0,
     waitTime: 0
 };
+
+
+export const otherExampleSlice = createSlice({
+    name: "otherExample",
+    initialState,
+    reducers: {
+        incrementOtherClickCountA: (state) => {
+            state.clickCountA += 1;
+        },
+    },
+});
+
+export const { incrementOtherClickCountA } = otherExampleSlice.actions;
+// export const selectOtherClickCountA = (state)
+export const otherReducer = otherExampleSlice.reducer;
 
 export const reduxExampleSlice = createSlice({
     name: "reduxExample",
@@ -37,8 +52,16 @@ export const reduxExampleSlice = createSlice({
 export const { setName, incrementClickCountA, incrementClickCountB, setWaitTime } = reduxExampleSlice.actions;
 
 export const selectName = (state: RootState) => state.reduxExample.name;
+export const selectClickCounts = createSelector([(state: RootState) => state.reduxExample.clickCountA, (state: RootState) => state.reduxExample.clickCountB], (clickCountA, clickCountB) => {
+    return {
+        clickCountA,
+        clickCountB
+    }
+});
 export const selectClickCountA = (state: RootState) => state.reduxExample.clickCountA;
 export const selectClickCountB = (state: RootState) => state.reduxExample.clickCountB;
 export const selectWaitTime = (state: RootState) => state.reduxExample.waitTime;
+export const selectTestArray = (state: RootState) => state.reduxExample.testArray;
+// export const selectTestArray = (state: RootState) => state.reduxExample.testArray.map((item, index) => { return { title: item.title } });
 
 export default reduxExampleSlice.reducer;

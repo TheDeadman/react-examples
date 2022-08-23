@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { CodeBlock } from "features/codeBlock/CodeBlock";
 import { useAppSelector, useAppDispatch } from 'redux/hooks';
 import {
@@ -10,8 +10,12 @@ import {
     incrementClickCountB,
     selectWaitTime,
     setWaitTime,
+    selectClickCounts,
+    incrementOtherClickCountA,
+    selectTestArray,
 } from './reduxExampleSlice';
 import { ExampleDisplay } from "features/examples/ExampleDisplay";
+import { selectOtherClickCountA } from "../reduxExampleLessEfficient/reduxExampleSlice";
 
 const code = `// ReduxExample.tsx
 import React, { useState } from "react";
@@ -199,6 +203,21 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;`
 // end
 
+const useSomeHook = () => {
+    const hookOne = () => {
+        console.log("HookOne");
+    }
+
+    const hookTwo = () => {
+        console.log("HookTwo")
+    }
+
+    return {
+        hookOne,
+        hookTwo
+    }
+}
+
 function wait(ms: number) {
     var start = Date.now(),
         now = start;
@@ -209,18 +228,36 @@ function wait(ms: number) {
 }
 
 
-const NameComponent = () => {
+const NameComponent = ({ hook }: { hook?: () => void }) => {
     const name = useAppSelector(selectName)
+    hook?.();
     return (
         <div style={{ background: "black" }}>Hello, {name}</div>
     )
 }
 
+const OtherComp = ({ children }: { children: ReactNode }) => {
+    return <><div>{children}-test</div></>
+}
+
+const OtherCompList = ({ testArray }: { testArray: { title: string }[] }) => {
+    return (
+        <>
+            {testArray.map((item, index) => <OtherComp key={index}>{item.title}</OtherComp>)}
+        </>
+    )
+}
+
 let childComponentRenderCount = 0;
 const ChildComponent = () => {
-    const clickCountA = useAppSelector(selectClickCountA);
+    const { clickCountA } = useAppSelector(selectClickCounts);
+    const testArray = useAppSelector(selectTestArray);
+    // const clickCountA = useAppSelector(selectClickCountA);
     const waitTime = useAppSelector(selectWaitTime);
     const time = wait(waitTime);
+
+    const memoizedList = useMemo(() => <OtherCompList testArray={testArray} />, [testArray]);
+
     return (
         <div style={{ background: "green" }}>
             Child One - Click Count A {clickCountA}
@@ -233,6 +270,8 @@ const ChildComponent = () => {
             <br />
             <NameComponent />
             <br />
+            {memoizedList}
+            {/* <OtherCompList testArray={testArray} /> */}
         </div>
     );
 };
@@ -241,16 +280,20 @@ let renderCountTwo = 0;
 const ChildComponent2 = () => {
     const clickCountA = useAppSelector(selectClickCountA)
     const clickCountB = useAppSelector(selectClickCountB)
+    const otherClickCountA = useAppSelector(selectOtherClickCountA)
+    const { hookOne } = useSomeHook();
     return (
         <div style={{ background: "blue" }}>
             <br />
-            <NameComponent />
+            <NameComponent hook={hookOne} />
             <br />
             Rendered {renderCountTwo++} times
             <br />
             Click Count A: {clickCountA}
             <br />
             Click Count B: {clickCountB}
+            <br />
+            Click Count A2: {otherClickCountA}
         </div>
     );
 };
@@ -303,6 +346,9 @@ const InputControls = () => {
             <div className="example-field">
                 <button onClick={() => dispatch(incrementClickCountA())}>
                     Button A
+                </button>
+                <button onClick={() => dispatch(incrementOtherClickCountA())}>
+                    Button A2
                 </button>
             </div>
         </div>

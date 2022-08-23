@@ -56,7 +56,7 @@ export const ExampleList = () => {
             <MenuItem value={'stateAndRendering'}>State and Rendering</MenuItem>
             <MenuItem value={'commonStateAndRendering'}>Common State and Rendering</MenuItem>
             <MenuItem value={'contextVsRedux'}>Context vs Redux</MenuItem>
-            {/* <MenuItem value={'arraysAndObjects'}>Arrays and Objects</MenuItem> */}
+            <MenuItem value={'arraysAndObjects'}>Arrays and Objects</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -67,7 +67,7 @@ export const ExampleList = () => {
       {match.exampleName === "stateAndRendering" && <TooLazyToRefactor><StateAndRenderingExample /></TooLazyToRefactor>}
       {match.exampleName === "commonStateAndRendering" && <TooLazyToRefactor><CommonStateAndRenderingExample /></TooLazyToRefactor>}
       {match.exampleName === "contextVsRedux" && <TooLazyToRefactor><ContextVsReduxExample /></TooLazyToRefactor>}
-      {/* {match.exampleName === "arraysAndObjects" && <TooLazyToRefactor><ArraysAndObjectsExamples /></TooLazyToRefactor>} */}
+      {match.exampleName === "arraysAndObjects" && <TooLazyToRefactor><ArraysAndObjectsExamples /></TooLazyToRefactor>}
     </>
   );
 };

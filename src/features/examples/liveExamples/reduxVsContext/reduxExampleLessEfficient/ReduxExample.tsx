@@ -218,7 +218,8 @@ const NameComponent = () => {
 
 let childComponentRenderCount = 0;
 const ChildComponent = () => {
-    const { clickCountA } = useAppSelector(selectReduxExample);
+    const { clickCountA } = useAppSelector(selectClickCounts);
+
     const { waitTime } = useAppSelector(selectReduxExample);
     const time = wait(waitTime);
     return (
@@ -239,6 +240,7 @@ const ChildComponent = () => {
 
 let renderCountTwo = 0;
 const ChildComponent2 = () => {
+
     const { clickCountA, clickCountB } = useAppSelector(selectClickCounts);
     return (
         <div style={{ background: "blue" }}>

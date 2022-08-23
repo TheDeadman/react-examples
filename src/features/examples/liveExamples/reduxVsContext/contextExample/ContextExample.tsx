@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { CodeBlock } from "features/codeBlock/CodeBlock";
 import { ExampleDisplay } from "features/examples/ExampleDisplay";
 import { ExampleContextProvider, useSetContextName, useContextName, useClickCountB, useClickCountA, useWaitTime, useIncrementClickCountB, useSetWaitTime, useIncrementClickCountA } from "./ContextProvider";
@@ -279,6 +279,22 @@ export const ExampleContextProvider = ({ children }: { children: ReactNode }) =>
     )
 }`
 
+
+const useSomeHook = () => {
+    const hookOne = useCallback(() => {
+        console.log("HookOne");
+    }, []);
+
+    const hookTwo = () => {
+        console.log("HookTwo")
+    }
+
+    return {
+        hookOne,
+        hookTwo
+    }
+}
+
 function wait(ms: number) {
     var start = Date.now(),
         now = start;
@@ -288,8 +304,9 @@ function wait(ms: number) {
     return now;
 }
 
-const NameComponent = () => {
+const NameComponent = ({ hook }: { hook?: () => void }) => {
     const name = useContextName();
+    hook?.();
     return (
         <div style={{ background: "black" }}>Hello, {name}</div>
     )
@@ -300,6 +317,10 @@ const ChildComponent = () => {
     const clickCountA = useClickCountA();
     const waitTime = useWaitTime();
     const time = wait(waitTime);
+    const { hookTwo } = useSomeHook();
+    useEffect(() => {
+        console.log("HOOK TWO CHANGED")
+    }, [hookTwo])
     return (
         <div style={{ background: "green" }}>
             Child One - Click Count A {clickCountA}
@@ -310,7 +331,7 @@ const ChildComponent = () => {
             <br />
             Child One - Render Count {childComponentRenderCount++}
             <br />
-            <NameComponent />
+            <NameComponent hook={hookTwo} />
             <br />
         </div>
     );
@@ -320,10 +341,11 @@ let renderCountTwo = 0;
 const ChildComponent2 = () => {
     const clickCountA = useClickCountA();
     const clickCountB = useClickCountB();
+    const { hookOne } = useSomeHook();
     return (
         <div style={{ background: "blue" }}>
             <br />
-            <NameComponent />
+            <NameComponent hook={hookOne} />
             <br />
             Rendered {renderCountTwo++} times
             <br />
