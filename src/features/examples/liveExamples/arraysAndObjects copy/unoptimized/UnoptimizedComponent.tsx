@@ -170,7 +170,6 @@ const AdvancedComponent = () => {
                           ""
                         )}.png`}
                       />
-                      <div className="hero-link-name">{hero.localized_name}</div>
                     </Link>
                   </div>
                 ))}
