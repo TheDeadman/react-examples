@@ -1,0 +1,225 @@
+# Memoized Array
+
+In this example, we have some various attempts to memoized the array data to avoid rendering some of the child components if they don't get any updated data.
+
+We will use `useMemo` to attempt to memoize the `HeroListSection` components. 
+`useMemo` will run the function provided to it only when one of the referenced variables in the "dependency array" changes.
+Most examples show memoizing array loops or some other logic, but it can also be used as a wrapper around a react component.
+
+## useMemo and useCallback
+
+In the following example code, we are trying to memoize `ExampleChildComponent` so that, even if `ExampleComponent` re-renders, `ExampleChildComponent` only re-renders if one of the memo dependencies changes.
+The memoization will not work in this example because `useMemo` determines that `testArrayValue` and `handleTestClick` are different from the previous value each time it is called.
+To address this, we need to make sure we are not creating new instances of these unless we need to. To do this, we will utilize `useMemo` on the `itemArray.map` and `useCallback` on the `handleTestClick`.
+
+```typescript
+import { useMemo, useState, useCallback } from "react";
+
+const ExampleComponent = () => {
+  const [testStateValue, setTestStateValue] = useState('');
+  const [itemArray, setItemArray] = useState([{title: "Item 1", value: "Value 1"},{title: "Item 2", value: "Value 2"},{title: "Item 3", value: "Value 3"}]);
+
+  // This creates a new function each time ExampleComponent renders
+  const handleTestClick = (str: string) => {
+    let newStr = str;
+    // click handler logic manipulating newStr
+    setTestStateValue(newStr);
+  }
+
+  // This creates a new array each time ExampleComponent renders
+  const testArrayValue = itemArray.map(item => {
+    return `${item.title} ${item.value}`;
+  });
+
+  return (
+    <>
+      {useMemo(() => {
+        return <ExampleChildComponent testProperty='testValue' testArrayProperty={testArrayValue} handleTestClick={handleTestClick} />
+      }, [testArrayValue, handleTestClick])}
+    </>
+  )
+}
+
+export default ExampleComponent;
+```
+
+This would be the result. The `useMemo` wrapping `ExampleChildComponent` will now work properly and only run when one of the dependencies changes. 
+
+```typescript
+import { useMemo, useState, useCallback } from "react";
+
+const ExampleComponent = () => {
+  const [testStateValue, setTestStateValue] = useState('');
+  const [itemArray, setItemArray] = useState([{title: "Item 1", value: "Value 1"},{title: "Item 2", value: "Value 2"},{title: "Item 3", value: "Value 3"}]);
+
+  // This creates a new function each time ExampleComponent renders
+  const handleTestClick = useCallback((str: string) => {
+    let newStr = str;
+    // click handler logic manipulating newStr
+    setTestStateValue(newStr);
+  }, [setTestStateValue]);
+
+  // This creates a new array each time ExampleComponent renders
+  const testArrayValue = useMemo(() => itemArray.map(item => {
+    return `${item.title} ${item.value}`;
+  }), [itemArray]);
+
+  return (
+    <>
+      {useMemo(() => {
+        return <ExampleChildComponent testProperty='testValue' testArrayProperty={testArrayValue} handleTestClick={handleTestClick} />
+      }, [testArrayValue, handleTestClick])}
+    </>
+  )
+}
+
+export default ExampleComponent;
+```
+
+Something else to note, we are not actually doing anything in `handleTestClick` except calling `setTestStateValue` with the string.
+`setTestStateValue` is already memoized for us by react's `useState` function. 
+We could technically just pass it directly to the child component / `useMemo` and not worry about having to wrap it. 
+
+```typescript
+{useMemo(() => { 
+  return <ExampleChildComponent testProperty='testValue' testArrayProperty={testArrayValue} handleTestClick={setTestStateValue} />
+}, [testArrayValue, setTestStateValue])}
+```
+
+## Memoizing the hero example
+
+In this example, we utilize `useMemo` to memoize the array map that combines data and then use that to create memoized versions of the three filtered data sets.
+We have 3 variations of displaying the array of heroes. The first is wrapping the list component in `useMemo`. The second is wrapping the filtering in `useMemo`. The third is wrapping both in `useMemo`.
+If you perform some actions, you will notice some differences in how the components re-render and how many times.
+
+When you perform any actions that attempt to filter the arrays, you will see that all of the lists re-render / run their useEffect and all of the hero images re-render. If you click on a hero to change the "selected hero", you will see that the first two hero lists re-render but only the first list runs the `useEffect`. 
+The third list does not re-render because all of the `useMemo` dependencies have remained the same. The third list does show that it ran the `useEffect` on the last render but that is because we are only ever re-rendering when it needs to be.
+
+This example shows how you could go about beginning to optimize the component renders. You could take the `useMemo` and `useCallback` patterns to an extreme but there is a better option.
+
+```typescript
+// MemoizedComponent
+import { useEffect, useMemo, useState, useRef } from "react";
+import { Checkbox, FormControlLabel } from "@mui/material";
+import HeroListFilter from "./components/HeroListFilter";
+import HeroListSection from "./components/HeroListSection";
+import SelectedHero from "./components/SelectedHero";
+import { getHeroes } from "./services/hero-data.service";
+import heroData from './hardcoded-data.json';
+
+export type Filter = { attr: string; complexity: number; text: string };
+
+type HeroRole = 'Carry' | 'Escape' | 'Nuker' | 'Disabler' | 'Support' | 'Initiator' | 'Durable' | 'Jungler' | 'Pusher';
+
+export type HeroData = {
+  id: string;
+  name: string;
+  localized_name: string;
+  primary_attr: 'agi' | 'str' | 'int';
+  attack_type: 'Melee' | 'Ranged';
+  roles: HeroRole[];
+  legs: number;
+  complexity?: number;
+}
+
+const AdvancedComponent = () => {
+  let renderCount = useRef(0);
+  renderCount.current++;
+  const [useSimulatedSlowdown, setUseSimulatedSlowDown] = useState(false);
+  const [loadingState, setLoadingState] = useState('loading');
+  const [heroes, setHeroes] = useState<HeroData[]>([]);
+  const [selectedHero, setSelectedHero] = useState('');
+  const [filter, setFilter] = useState<Filter>({ attr: '', complexity: 0, text: '' });
+
+  useEffect(() => {
+    const getAllHeroes = async () => {
+      try {
+        const heroesResponse = await getHeroes();
+
+        setHeroes(heroesResponse.data);
+        setLoadingState('done');
+      } catch (ex) {
+        setLoadingState('error');
+      }
+    };
+    getAllHeroes();
+  }, []);
+
+  const handleFilterClick = (attr: string) => {
+    if (attr === filter.attr) {
+      setFilter({ ...filter, attr: '' });
+    } else {
+      setFilter({ ...filter, attr: attr });
+    }
+  }
+
+  const handleComplexityFilterClick = (complexity: number) => {
+    if (complexity === filter.complexity) {
+      setFilter({ ...filter, complexity: 0 });
+    } else {
+      setFilter({ ...filter, complexity: complexity });
+    }
+  }
+
+  const handleFilterTextChange = (text: string) => {
+    setFilter({ ...filter, text: text });
+  }
+
+  // Utilize useMemo in order to only run this loop when the "heroes" array changes.
+  const memoizedHeroes = useMemo(() => heroes.map(hero => {
+    let complexity = heroData.find(hero2 => hero2.id === parseInt(hero.id))?.complexity;
+    if (complexity) {
+      hero.complexity = complexity;
+    }
+    return hero;
+  }), [heroes]);
+
+  // Because filter creates a new array, we are actually creating three new arrays each time this runs. 
+  // This could be optimized by combining all three filters into one .filter call.
+  // Just filter the strength heroes normally. Results in a new array each time this component renders.
+  const strengthHeroes = memoizedHeroes
+    .filter((hero) => hero.primary_attr === 'str')
+    .filter((hero) => filter.complexity === 0 || hero.complexity === filter.complexity)
+    .filter((hero) => hero.name.indexOf(filter.text) !== -1);
+
+  // Memoize the filtered agi heroes so that this only runs when the memoizedHeroes or filter is updated.
+  const agilityHeroes = useMemo(() => memoizedHeroes
+    .filter((hero) => hero.primary_attr === 'agi')
+    .filter((hero) => filter.complexity === 0 || hero.complexity === filter.complexity)
+    .filter((hero) => hero.name.indexOf(filter.text) !== -1), [memoizedHeroes, filter]);
+
+  // Memoize the filtered int heroes so that this only runs when the memoizedHeroes or filter is updated.
+  const intelligenceHeroes = useMemo(() => memoizedHeroes
+    .filter((hero) => hero.primary_attr === 'int')
+    .filter((hero) => filter.complexity === 0 || hero.complexity === filter.complexity)
+    .filter((hero) => hero.name.indexOf(filter.text) !== -1), [memoizedHeroes, filter]);
+
+  return (
+    <div className="dota">
+      <div>
+        Arrays and Objects: Unoptimized
+      </div>
+      <FormControlLabel control={<Checkbox checked={useSimulatedSlowdown} onChange={(e) => setUseSimulatedSlowDown(e.target.checked)} />} label="Use Simulated Slowdown" />
+      <div className="performance-data-container">
+        Has Rendered {renderCount.current} times
+      </div>
+      <SelectedHero selectedHero={selectedHero} />
+      {loadingState === "error" && <div className="error-page">ERROR</div>}
+      {loadingState !== "loading" && <HeroListFilter filter={filter} handleComplexityFilterClick={handleComplexityFilterClick} handleFilterTextChange={handleFilterTextChange} handleFilterClick={handleFilterClick} />}
+      <div className={`hero-list-section-container ${filter.attr}`}>
+        {/* Trying to memoized the component based on the mappedHeroes array will never work. Many array operations (.map in this case) will create a new array instance and the memoize function will always see the input data as having changed even if the array is identical to the previous array. */}
+        {useMemo(() => <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='str' heroes={strengthHeroes} loadingState={loadingState} handleHeroClick={setSelectedHero} />, [loadingState, strengthHeroes, useSimulatedSlowdown])}
+
+        {/* Trying to just use the memoized array will not work because a component will always render down the react tree. In this case, we are passing the same instance of the heroesArray but the component still re-renders. */}
+        <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='agi' heroes={agilityHeroes} loadingState={loadingState} handleHeroClick={setSelectedHero} />
+
+        {/*  Using the memoized array with useMemo for the component does work because the objects in the dependency array are unchanged when this component re-renders (assuming one of the objects are not intentionally being changed) */}
+        {useMemo(() => <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='int' heroes={intelligenceHeroes} loadingState={loadingState} handleHeroClick={setSelectedHero} />, [loadingState, intelligenceHeroes, useSimulatedSlowdown])}
+      </div>
+    </div>
+  );
+};
+
+export default AdvancedComponent;
+
+```

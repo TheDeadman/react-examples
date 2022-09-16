@@ -1,0 +1,48 @@
+.example-container {
+    display: flex;
+    width: 100%;
+    font-size: 15px;
+    justify-content: center;
+
+    .markdown-container {
+        text-align: start;
+
+        p {
+            code {
+                background: rgba(110, 118, 129, 0.4);
+                padding: 2px;
+                border-radius: 2px;
+            }
+        }
+
+        a {
+            color: #58a6ff;
+
+            &:visited {
+                color: #58a6ff;
+            }
+        }
+    }
+}
+
+.example-container>div {
+    width: 100%;
+
+    &.markdown-container {
+        width: 95%;
+    }
+}
+
+.flex-children {
+    display: flex;
+}
+
+.flex-children>div {
+    flex: 1;
+}
+
+.markdown-toggle-group {
+    &>button {
+        width: 95px;
+    }
+}
