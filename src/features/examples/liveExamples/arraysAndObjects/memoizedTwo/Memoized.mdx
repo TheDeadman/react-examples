@@ -1,0 +1,296 @@
+# Taking Memoization Further
+
+This example shows the lengths that you need to go to in order to try to optimize this app with `useMemo` and `useCallback`. 
+We are using the strategy that was implemented for the "intelligence" heroes section from the previous example with some alterations.
+
+With the memoized array and memoized `HeroListSection`, we were able to avoid re-rendering the `Hero` components when an item was clicked but they still re-rendered when we tried to filter.
+The goal is going to be to prevent re-rendering the `Hero` components completely. To do so, we will memoize the `Hero` components and avoid removing them from the DOM if they are filtered out so that they don't have to render again when the filter would include them.
+
+
+You will see there is a lot of extra markup in the react code and we cannot completely optimize around any logic in the `HeroListSection.tsx` file. When you turn on the simulated slowdown, you will see that filtering still causes some delay because of the `useEffect` in the `HeroListSection`.
+
+## MemoizedComponent.tsx
+
+In this file, we added a `hidden` property to the `HeroData`. Instead of filtering the array, we are mapping the array and setting the `hidden` property.
+
+```typescript
+// MemoizedComponent
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { Checkbox, FormControlLabel } from "@mui/material";
+import HeroListFilter from "./components/HeroListFilter";
+import HeroListSection from "./components/HeroListSection";
+import SelectedHero from "./components/SelectedHero";
+import { getHeroes } from "./services/hero-data.service";
+import heroData from './hardcoded-data.json';
+
+export type Filter = { attr: string; complexity: number; text: string };
+
+type HeroRole = 'Carry' | 'Escape' | 'Nuker' | 'Disabler' | 'Support' | 'Initiator' | 'Durable' | 'Jungler' | 'Pusher';
+
+export type HeroData = {
+  id: string;
+  name: string;
+  localized_name: string;
+  primary_attr: 'agi' | 'str' | 'int';
+  attack_type: 'Melee' | 'Ranged';
+  roles: HeroRole[];
+  legs: number;
+  complexity?: number;
+  // Added hidden property to do determine if we want to show the hero or not.
+  hidden: boolean;
+}
+
+const AdvancedComponent = () => {
+  let renderCount = useRef(0);
+  renderCount.current++;
+  const [useSimulatedSlowdown, setUseSimulatedSlowDown] = useState(false);
+  const [loadingState, setLoadingState] = useState('loading');
+  const [heroes, setHeroes] = useState<HeroData[]>([]);
+  const [selectedHero, setSelectedHero] = useState('');
+  const [filter, setFilter] = useState<Filter>({ attr: '', complexity: 0, text: '' });
+
+  useEffect(() => {
+    const getAllHeroes = async () => {
+      try {
+        const heroesResponse = await getHeroes();
+
+        setHeroes(heroesResponse.data);
+        setLoadingState('done');
+      } catch (ex) {
+        setLoadingState('error');
+      }
+    };
+    getAllHeroes();
+  }, []);
+
+  const handleFilterClick = (attr: string) => {
+    if (attr === filter.attr) {
+      setFilter({ ...filter, attr: '' });
+    } else {
+      setFilter({ ...filter, attr: attr });
+    }
+  }
+
+  const handleComplexityFilterClick = (complexity: number) => {
+    if (complexity === filter.complexity) {
+      setFilter({ ...filter, complexity: 0 });
+    } else {
+      setFilter({ ...filter, complexity: complexity });
+    }
+  }
+
+  const handleFilterTextChange = (text: string) => {
+    setFilter({ ...filter, text: text });
+  }
+
+  // Utilise useCallback to memoize this function so that it is not a "new value" for child components each time this renders.
+  const handleHeroClick = useCallback((hero: string) => {
+    setSelectedHero(hero);
+  }, [setSelectedHero]);
+
+  // Utilize useMemo in order to only run this loop when the "heroes" array changes.
+  const memoizedHeroes = useMemo(() => heroes.map(hero => {
+    let complexity = heroData.find(hero2 => hero2.id === parseInt(hero.id))?.complexity;
+    if (complexity) {
+      hero.complexity = complexity;
+    }
+    hero.hidden = false;
+    return hero;
+  }), [heroes]);
+
+  // Create a memoized version of the hero "filtering". Instead of actually removing the heroes with ".filter", we are setting the "hidden" property for each hero.
+  const filteredHeroes = useMemo(() => memoizedHeroes.map(hero => {
+    if ((filter.complexity !== 0 && hero.complexity !== filter.complexity) || (hero.localized_name.indexOf(filter.text) === -1)) {
+      hero.hidden = true;
+    } else {
+      hero.hidden = false;
+    }
+    return hero;
+  }), [memoizedHeroes, filter])
+
+
+  const strengthHeroes = useMemo(() => filteredHeroes
+    .filter((hero) => hero.primary_attr === 'str'), [filteredHeroes]);
+
+  const agilityHeroes = useMemo(() => filteredHeroes
+    .filter((hero) => hero.primary_attr === 'agi'), [filteredHeroes]);
+
+  const intelligenceHeroes = useMemo(() => filteredHeroes
+    .filter((hero) => hero.primary_attr === 'int'), [filteredHeroes]);
+
+  return (
+    <div className="dota">
+      <div>
+        Arrays and Objects: Unoptimized
+      </div>
+      <FormControlLabel control={<Checkbox checked={useSimulatedSlowdown} onChange={(e) => setUseSimulatedSlowDown(e.target.checked)} />} label="Use Simulated Slowdown" />
+      <div className="performance-data-container">
+        Has Rendered {renderCount.current} times
+      </div>
+      <SelectedHero selectedHero={selectedHero} />
+      {loadingState === "error" && <div className="error-page">ERROR</div>}
+      {loadingState !== "loading" && <HeroListFilter filter={filter} handleComplexityFilterClick={handleComplexityFilterClick} handleFilterTextChange={handleFilterTextChange} handleFilterClick={handleFilterClick} />}
+      <div className={`hero-list-section-container ${filter.attr}`}>
+        {useMemo(() => <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='str' heroes={strengthHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />, [loadingState, strengthHeroes, handleHeroClick, useSimulatedSlowdown])}
+
+        {useMemo(() => <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='agi' heroes={agilityHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />, [loadingState, agilityHeroes, handleHeroClick, useSimulatedSlowdown])}
+
+        {useMemo(() => <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} attr='int' heroes={intelligenceHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />, [loadingState, intelligenceHeroes, handleHeroClick, useSimulatedSlowdown])}
+      </div>
+    </div>
+  );
+};
+
+export default AdvancedComponent;
+```
+
+## HeroListSection.tsx
+
+In this file, we wrap the HeroImage in a div. We then set a styles property on that div that includes "display: none" when we want to hide this hero.
+This allows us to always have the HeroImages rendered on the page to address the situation where a hero would be removed via filter then added back via filter.
+
+We are also passing down the handleHeroClick function because creating an inline function was creating a new "object" each time this rendered which would cause memoization not to work.
+
+```typescript
+// HeroListSection
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import { useEffect, useMemo, useRef } from "react";
+import { HeroData } from "../MemoizedComponent";
+import HeroImage from "./Hero";
+
+function wait(ms: number) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+        now = Date.now();
+    }
+    return now;
+}
+
+interface HeroListSectionProps {
+    attr: string;
+    loadingState: string;
+    heroes: HeroData[];
+    handleHeroClick: (str: string) => void;
+    useSimulatedSlowdown: boolean;
+}
+
+function getListSectionName(attr: string) {
+    if (attr === 'str') {
+        return "Strength"
+    } else if (attr === 'agi') {
+        return "Agility"
+    } else if (attr === 'int') {
+        return "Intellect"
+    }
+};
+
+const HeroListSection = ({ attr, loadingState, heroes, handleHeroClick, useSimulatedSlowdown }: HeroListSectionProps) => {
+    const hadToRunEffect = useRef(false);
+    let renderCount = useRef(0);
+    renderCount.current++;
+
+    useEffect(() => {
+        hadToRunEffect.current = false;
+    })
+
+    // This is a hack. Don't use useMemo like this... it is for calculating and returning a value.
+    useMemo(function () {
+        if (useSimulatedSlowdown) {
+            wait(150);
+        }
+        hadToRunEffect.current = true;
+    }, [heroes, useSimulatedSlowdown]);
+
+    return (
+        <div className={`hero-list-section ${attr}`}>
+            <h3>{getListSectionName(attr)} - Has rendered {renderCount.current} times. </h3>
+            <div>Ran useEffect on last render: {`${hadToRunEffect.current}`} - {heroes.length}</div>
+            <div className="hero-list">
+                {loadingState === "loading" && (
+                    <div className="loading-icon">
+                        <RotateRightIcon />
+                    </div>
+                )}
+                {loadingState !== "loading" &&
+                    heroes.map((hero) => {
+                        // Create a styles object that sets display: none if the hero should be hidden
+                        let styles = {};
+
+                        if (hero.hidden) {
+                            styles = {
+                                display: "none"
+                            }
+                        }
+                        return (
+                            // Wrap the HeroImage in a div that we apply the styles to
+                            <div style={styles} key={hero.name}>
+                                {/* Passed the handleHeroClick reference down because we were creating a new object each time we created an inline function that broke memoization. */}
+                                <HeroImage useSimulatedSlowdown={useSimulatedSlowdown} hero={hero} onClick={handleHeroClick} />
+                            </div>
+                        )
+                    })}
+            </div>
+        </div>
+    )
+}
+
+export default HeroListSection;
+```
+
+## Hero.tsx
+
+In this file, we updated the export so that the component is wrapped with `memo`. 
+This tries to make memoized versions of the component based on properties passed in during rendering.
+
+This is similar to our `useMemo` components in other files but we cannot utilize `useMemo` for this situation because we are not allowed to call any hooks inside our `.map` loop.
+Hooks are only allowed to be called from the top level of a component.
+
+
+```typescript
+// Include "memo" to memoize the component
+import { memo, useRef } from "react";
+import { HeroData } from "../MemoizedComponent";
+
+interface HeroProps {
+    hero: HeroData;
+    onClick: (str: string) => void;
+    useSimulatedSlowdown: boolean;
+}
+
+function wait(ms: number) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+        now = Date.now();
+    }
+    return now;
+}
+
+// Instead of using "hero", we could reference the properties that we want to use on the hero object (e.g. localized_name and name).
+// We don't need to in this situation but it much easier to memoize components based on properties that are not objects / functions / arrays.
+const HeroImage = ({ hero, onClick, useSimulatedSlowdown }: HeroProps) => {
+    let renderCount = useRef(0);
+    renderCount.current++;
+
+    if (useSimulatedSlowdown) {
+        wait(15);
+    }
+
+    return (
+        // Update the onclick to account for the change from the HeroListSection
+        <div onClick={() => onClick(hero.localized_name)} className={`hero-link`}>
+            <div className="render-count">Render Count: {renderCount.current}</div>
+            <div className="hero-link-name">
+                <div>
+                    {hero.localized_name}
+                </div>
+            </div>
+            <img alt={hero.localized_name} src={`https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${hero.name.replace("npc_dota_hero_", "")}.png`} />
+        </div>
+    )
+}
+
+// Wrap the export in "memo". This will try to memoize the component based on the properties that are passed to it.
+export default memo(HeroImage);
+```

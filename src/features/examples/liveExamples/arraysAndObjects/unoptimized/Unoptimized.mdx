@@ -1,0 +1,390 @@
+# Unoptimized
+
+## Overview
+
+This example makes an `axios` request to get an array of **heroes** from [DotA 2](https://www.dota2.com/home). 
+The items are then used to display images for each hero in three separate sections based on one of the properties on the hero objects. 
+The user can filter the displayed heroes based on "primary attribute", "complexity", or with a string in a text box.
+The images can also be clicked to update a text area that displays the last clicked hero.
+
+This demo illustrates some of the potential problems that can be encountered when working with arrays (or other objects). 
+There is a checkbox that simulates slow rendering hero image components.
+Slow renders could happen because of heavy / large amounts of logic somewhere at / below a component or due to the sheer number of child elements under a component.
+Users often won't notice inefficient code when running on a decent computer but it becomes more obvious on mobile devices, especially lower end mobile devices.
+When enabled, each HeroImage takes 15 milliseconds to render. This helps to illustate the need foe awareness of how the code structure can affect application performance.
+
+Each component has a render count to show how many times react tried to render that component since it was created.
+
+> __NOTE:__ Notice that if the slowdown is enabled and you click on one of the filter buttons, you will see a message that there was a violation message similar to "click handler took 1000ms". This does not mean that the code inside of the `onClick` function took that amount of time itself. This means that the click ultimately triggered a synchronous action that blocked rendering / use of the page for x amount of time. In this example, it is because react has to render all of the hero images again and each one takes about 15ms to execute the code.
+
+> __NOTE:__ When the slowdown is enabled, you are unlikely to see the react dev tools' highlight of re-rendered components. Disabled the slowdown if you want to see the visual indicators when something re-renders.
+
+## Code
+
+### Main component
+
+This is the high level component that builds the page. 
+When the page loads, we make a call to `getHeroes` to get the hero data and set our state array with the result.
+We are also importing some hardcoded data (I couldn't find an API that included said data) and looping both arrays to make a combined set of data.
+
+Some of the important points to note are...
+
+1. The state is being held in this component and "prop drilled" down to the child components. Because all of the state lives in this high level component, all state changes cause this to re-render and in turn re-renders all of the child components. You will see that every action causes the render counts on everything to go up. The only time you will see a lower count is if you filter with the text filter and actually stop rendering some of the hero components.
+
+2. The two arrays of data are being combined in the component's body which means that array mapping runs each time the component renders.
+
+```typescript
+// UnoptimizedComponent.tsx
+import { useEffect, useRef, useState } from "react";
+import { Checkbox, FormControlLabel } from "@mui/material";
+import HeroListFilter from "./components/HeroListFilter";
+import HeroListSection from "./components/HeroListSection";
+import SelectedHero from "./components/SelectedHero";
+import { getHeroes } from "./services/hero-data.service";
+import heroData from './hardcoded-data.json';
+
+export type Filter = { attr: string; complexity: number; text: string };
+
+type HeroRole = 'Carry' | 'Escape' | 'Nuker' | 'Disabler' | 'Support' | 'Initiator' | 'Durable' | 'Jungler' | 'Pusher';
+
+export type HeroData = {
+  id: string;
+  name: string;
+  localized_name: string;
+  primary_attr: 'agi' | 'str' | 'int';
+  attack_type: 'Melee' | 'Ranged';
+  roles: HeroRole[];
+  legs: number;
+  complexity?: number;
+}
+
+const UnoptimizedComponent = () => {
+  let renderCount = useRef(0);
+  renderCount.current++;
+  const [useSimulatedSlowdown, setUseSimulatedSlowDown] = useState(false);
+  const [loadingState, setLoadingState] = useState('loading');
+  const [heroes, setHeroes] = useState<HeroData[]>([]);
+  const [selectedHero, setSelectedHero] = useState('');
+  const [filter, setFilter] = useState<Filter>({ attr: '', complexity: 0, text: '' });
+
+  useEffect(() => {
+    // create a new async function and call it because the function direclty used in "useEffect" cannot be async. 
+    // Alternatively, we could use the promise .then / .catch syntax if we didn't want to create an async function and call it.
+    const getAllHeroes = async () => {
+      try {
+        const heroesResponse = await getHeroes();
+
+        setHeroes(heroesResponse.data);
+        setLoadingState('done');
+      } catch (ex) {
+        setLoadingState('error');
+      }
+    };
+    getAllHeroes();
+  }, []);
+
+  const handleFilterClick = (attr: string) => {
+    if (attr === filter.attr) {
+      setFilter({ ...filter, attr: '' });
+    } else {
+      setFilter({ ...filter, attr: attr });
+    }
+  }
+
+  const handleComplexityFilterClick = (complexity: number) => {
+    if (complexity === filter.complexity) {
+      setFilter({ ...filter, complexity: 0 });
+    } else {
+      setFilter({ ...filter, complexity: complexity });
+    }
+  }
+
+  const handleFilterTextChange = (text: string) => {
+    setFilter({ ...filter, text: text });
+  }
+
+  const handleHeroClick = (hero: string) => {
+    setSelectedHero(hero);
+  }
+
+  // This is sub-optimal. We are remapping this array each time this component has to re-render when this mapping does not need to happen multiple times.
+  const mappedHeroes = heroes.map(hero => {
+    let complexity = heroData.find(hero2 => hero2.id === parseInt(hero.id))?.complexity;
+    if (complexity) {
+      hero.complexity = complexity;
+    }
+    return hero;
+  });
+
+
+  return (
+    <div className="dota">
+      <div>
+        Arrays and Objects: Unoptimized
+      </div>
+      <FormControlLabel control={<Checkbox checked={useSimulatedSlowdown} onChange={(e) => setUseSimulatedSlowDown(e.target.checked)} />} label="Use Simulated Slowdown" />
+      <div className="performance-data-container">
+        Has Rendered {renderCount.current} times
+      </div>
+      <SelectedHero selectedHero={selectedHero} />
+      {loadingState === "error" && <div className="error-page">ERROR</div>}
+      {loadingState !== "loading" && <HeroListFilter filter={filter} handleComplexityFilterClick={handleComplexityFilterClick} handleFilterTextChange={handleFilterTextChange} handleFilterClick={handleFilterClick} />}
+      <div className={`hero-list-section-container ${filter.attr}`}>
+        <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} filter={filter} attr='str' heroes={mappedHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />
+        <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} filter={filter} attr='agi' heroes={mappedHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />
+        <HeroListSection useSimulatedSlowdown={useSimulatedSlowdown} filter={filter} attr='int' heroes={mappedHeroes} loadingState={loadingState} handleHeroClick={handleHeroClick} />
+      </div>
+    </div>
+  );
+};
+
+export default UnoptimizedComponent;
+```
+
+### SelectedHero component
+
+This component simply takes a string property and displays it.
+
+```typescript
+// SelectedHero.tsx
+import { useRef } from "react";
+
+interface SelectedHeroProps {
+    selectedHero: string
+}
+
+const SelectedHero = ({ selectedHero }: SelectedHeroProps) => {
+    let renderCount = useRef(0);
+    renderCount.current++;
+
+    return (
+        <div className="selected-hero-container">
+            <div className="selected-hero">
+                Selected Hero is: {selectedHero} - has rendered {renderCount.current} times.
+            </div>
+        </div>
+    )
+};
+
+export default SelectedHero;
+```
+
+### HeroListFilter component
+
+This component displays the filters and is in charge of calling the methods to update filter state. 
+The click and text change handlers are passed in from the parent component. 
+The current filter state data is also passed in from the parent component and used to conditionally render the filter controls.
+
+```typescript
+// HeroListFilter.tsx
+interface HeroListFilterProps {
+    filter: { attr: string, complexity: number, text: string };
+    handleFilterClick: (str: string) => void;
+    handleComplexityFilterClick: (num: number) => void;
+    handleFilterTextChange: (str: string) => void;
+}
+
+const HeroListFilter = ({ filter, handleFilterClick, handleFilterTextChange, handleComplexityFilterClick }: HeroListFilterProps) => {
+
+    return (
+        <div className="hero-filters-container">
+            <div className="hero-filters">
+                <div className="herogridpage_FilterLabel">
+                    Filter Heroes
+                </div>
+                <div className="herogridpage_SpecificFilterContainer">
+                    <div className="herogridpage_SelectorLabel">
+                        Attribute
+                    </div>
+                    <div className={`herogridpage_Filter str ${filter.attr === 'str' ? 'selected' : ''}`} onClick={() => handleFilterClick('str')}></div>
+                    <div className={`herogridpage_Filter agi ${filter.attr === 'agi' ? 'selected' : ''}`} onClick={() => handleFilterClick('agi')}></div>
+                    <div className={`herogridpage_Filter int ${filter.attr === 'int' ? 'selected' : ''}`} onClick={() => handleFilterClick('int')}></div>
+                </div>
+                <div className="herogridpage_SpecificFilterContainer">
+                    <div className="herogridpage_SelectorLabel">
+                        Complexity
+                    </div>
+                    <div className={`herogridpage_Filter complexity ${filter.complexity >= 1 ? 'selected' : ''}`} onClick={() => handleComplexityFilterClick(1)}></div>
+                    <div className={`herogridpage_Filter complexity ${filter.complexity >= 2 ? 'selected' : ''}`} onClick={() => handleComplexityFilterClick(2)}></div>
+                    <div className={`herogridpage_Filter complexity ${filter.complexity >= 3 ? 'selected' : ''}`} onClick={() => handleComplexityFilterClick(3)}></div>
+                </div>
+                <div className="herogridpage_SearchBarContainer">
+                    <div className="herogridpage_SearchBar">
+                        <div className="herogridpage_MagnifyingGlass"></div>
+                        <form>
+                            <input type="text" value={filter.text} onChange={(e) => handleFilterTextChange(e.target.value)} />
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default HeroListFilter;
+```
+
+### HeroListSection component
+
+This component is responsible for displaying a subset of the heroes array.
+The heroes array is passed into this component along with a property defining the main "attribute" for this section and the filter object.
+The component is responsible for filtering the heroes array based on the main attribute and filter object then displaying each individual hero with the `Hero` component.
+
+A click handler is also passed then used in the `clickHandler` for each individual `Hero`.
+
+```typescript
+// HeroListSection.tsx
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import { useEffect, useRef } from "react";
+import { Filter, HeroData } from "../UnoptimizedComponent";
+import HeroImage from "./Hero";
+
+function wait(ms: number) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+        now = Date.now();
+    }
+    return now;
+}
+
+interface HeroListSectionProps {
+    attr: string;
+    loadingState: string;
+    heroes: HeroData[];
+    filter: Filter;
+    handleHeroClick: (str: string) => void;
+    useSimulatedSlowdown: boolean;
+}
+
+function getListSectionName(attr: string) {
+    if (attr === 'str') {
+        return "Strength"
+    } else if (attr === 'agi') {
+        return "Agility"
+    } else if (attr === 'int') {
+        return "Intellect"
+    }
+};
+
+const HeroListSection = ({ attr, loadingState, heroes, filter, handleHeroClick, useSimulatedSlowdown }: HeroListSectionProps) => {
+    let renderCount = useRef(0);
+    let hadToRunEffect = useRef(false);
+    renderCount.current++;
+
+    useEffect(() => {
+        hadToRunEffect.current = false;
+    })
+    useEffect(function () {
+        if (useSimulatedSlowdown) {
+            wait(150);
+        }
+        hadToRunEffect.current = true;
+    }, [heroes]);
+
+
+    return (
+        <div className={`hero-list-section ${attr}`}>
+            <h3>{getListSectionName(attr)} - Has rendered {renderCount.current} times</h3>
+            <div>Ran useEffect on last render: {`${hadToRunEffect.current}`}</div>
+            <div className="hero-list">
+                {loadingState === "loading" && (
+                    <div className="loading-icon">
+                        <RotateRightIcon />
+                    </div>
+                )}
+                {loadingState !== "loading" &&
+                    heroes
+                        .filter((hero) => hero.primary_attr === attr)
+                        .filter((hero) => filter.complexity === 0 || hero.complexity === filter.complexity)
+                        .filter((hero) => hero.name.indexOf(filter.text) !== -1)
+                        .map((hero) => (
+                            <HeroImage useSimulatedSlowdown={useSimulatedSlowdown} key={hero.name} hero={hero} onClick={handleHeroClick} />
+                        ))}
+            </div>
+        </div>
+    )
+}
+
+export default HeroListSection;
+```
+
+### Hero component
+
+This component is responsible for displaying an individual hero image. 
+It also takes a click handler to update the `selectedHero` state in the parent's parent component. 
+"Prop drilling" through a couple of levels is somewhat manageable but it quickly becomes a nightmare to deal with when there are more levels that the prop has to be passed through.
+The `selectedHero` is then referenced in the `SelectedHero` component.
+
+```Hero.tsx
+// Hero.tsx
+import { useRef } from "react";
+import { HeroData } from "../UnoptimizedComponent";
+
+interface HeroProps {
+    hero: HeroData;
+    onClick: (str: string) => void;
+    useSimulatedSlowdown: boolean;
+}
+
+function wait(ms: number) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+        now = Date.now();
+    }
+    return now;
+}
+
+const HeroImage = ({ hero, onClick, useSimulatedSlowdown }: HeroProps) => {
+    let renderCount = useRef(0);
+    renderCount.current++;
+
+    if (useSimulatedSlowdown) {
+        wait(15);
+    }
+
+    return (
+        <div onClick={() => onClick(hero.localized_name)} className={`hero-link`}>
+            <div className="render-count">Render Count: {renderCount.current}</div>
+            <div className="hero-link-name">
+                <div>
+                    {hero.localized_name}
+                </div>
+            </div>
+            <img alt={hero.localized_name} src={`https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${hero.name.replace("npc_dota_hero_", "")}.png`} />
+        </div>
+    )
+}
+
+export default HeroImage;
+```
+
+### Hero Data Service
+
+This service file contains a simple function to make an axios call. It has a very basic retry implementation for failed responses. API usage does not need to be complex. 
+In most cases, it is more manageable, testable, and transparent to use simple service patterns rather than rely on react-query / rtk query or other libraries.
+
+```typscript
+// hero-data.service.ts
+import axios, { AxiosResponse } from 'axios';
+import { HeroData } from '../UnoptimizedComponent';
+
+// function to wait for x ms without blocking the thread execution.
+const wait = (ms: number | undefined) => new Promise(r => setTimeout(r, ms));
+
+export const getHeroes = async (retryCount: number = 1): Promise<AxiosResponse<HeroData[], any>> => {
+    try {
+        return await axios.get(
+            "https://api.opendota.com/api/heroes"
+        ) as AxiosResponse<HeroData[]>;
+    } catch (ex) {
+        if (retryCount < 6) {
+            await wait(300 * retryCount)
+            return await getHeroes(retryCount + 1);
+        } else {
+            throw ex
+        }
+    }
+}
+```

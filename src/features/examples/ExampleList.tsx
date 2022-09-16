@@ -3,11 +3,6 @@ import {
   Box,
   FormControl,
   InputLabel,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   MenuItem,
   Select,
 } from "@mui/material";
@@ -16,7 +11,7 @@ import PropsVsStateExample from './liveExamples/propsVsState/PropsVsState';
 import { StateAndRenderingExample } from './liveExamples/stateAndRendering/StateAndRenderingExample';
 import { CommonStateAndRenderingExample } from './liveExamples/commonStateAndRendering/CommonStateAndRenderingExample';
 import { BeforeStarting } from './BeforeStarting';
-import './example.css';
+import './example.scss';
 import { ContextVsReduxExample } from './liveExamples/reduxVsContext/ReduxVsContextExample';
 import { ArraysAndObjectsExamples } from './liveExamples/arraysAndObjects/ArraysAndObjectsExamples';
 
@@ -25,7 +20,7 @@ const BasicExample = lazy(() => import('./liveExamples/basic/BasicExample'))
 
 const TooLazyToRefactor = ({ children }: { children: ReactNode }) => {
   return (
-    <div style={{ width: 1235, display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'thin solid white' }}>
+    <div style={{ width: 1265, display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'thin solid white' }}>
       {children}
     </div>
   )

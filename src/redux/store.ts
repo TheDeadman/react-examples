@@ -2,13 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import reduxExampleReducer from "features/examples/liveExamples/commonStateAndRendering/reduxExample/reduxExampleSlice";
 import { otherReducer } from "features/examples/liveExamples/reduxVsContext/reduxExampleLessEfficient/reduxExampleSlice";
 import drawerMenuReducer from "features/drawerMenu/drawerMenuSlice";
-import unoptimizedDotaHeroReducer from 'features/examples/liveExamples/arraysAndObjects/unoptimized/unoptimizedSlice';
+import optimizedDotaHeroes from 'features/examples/liveExamples/arraysAndObjects/redux/src/optimizedSlice';
 
 export const store = configureStore({
   reducer: {
     drawerMenu: drawerMenuReducer,
     reduxExample: reduxExampleReducer,
-    unoptimizedDotaHeroes: unoptimizedDotaHeroReducer,
+    optimizedDotaHeroes: optimizedDotaHeroes,
     otherSlice: otherReducer
   },
 });

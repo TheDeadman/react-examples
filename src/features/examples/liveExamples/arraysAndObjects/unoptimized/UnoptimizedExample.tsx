@@ -1,18 +1,12 @@
-import React, { ReactNode, useState } from "react";
-import { CodeBlock } from "features/codeBlock/CodeBlock";
-import { ExampleDisplay } from "features/examples/ExampleDisplay";
-import AdvancedComponent from "./UnoptimizedComponent";
+import UnoptimizedComponent from "./src/UnoptimizedComponent";
+import ReactComponent from './Unoptimized.mdx'
+import { ExampleMarkdownDisplay } from "features/examples/ExampleMarkdownDisplay";
 
 
-const AdvancedDescription = () => {
-  return (
-    <></>
-  )
-}
 
 const PropsVsStateCombined = () => {
   return (
-    <ExampleDisplay descriptionBlock={<AdvancedDescription />} componentBlock={<AdvancedComponent />} />
+    <ExampleMarkdownDisplay descriptionBlock={ReactComponent} componentBlock={<UnoptimizedComponent />} />
   )
 }
 

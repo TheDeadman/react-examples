@@ -56,14 +56,4 @@ export const selectClickCounts = createSelector([(state: RootState) => state.red
     return { clickCountA: clickCountA, clickCountB: clickCountB }
 });
 
-export const selectObj1 = (state: RootState) => {
-    return {
-        testObj: state.reduxExample.testObj
-    }
-}
-
-export const selectObj2 = (state: RootState) => {
-    return state.reduxExample.testObj
-}
-
 export default reduxExampleSlice.reducer;
